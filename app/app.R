@@ -17,7 +17,12 @@ ui <- fluidPage(
                               actionButton("goButton", "Calculate Score")
                                       ),
                                         mainPanel(
+                                                verticalLayout( 
+                                                verbatimTextOutput("descript"),
+                                                tableOutput("score.changing"),
+                                                verbatimTextOutput("descript2"),
                                                 tableOutput("final.score")
+                                                )
                                                 
                                                 
                                         )
@@ -56,7 +61,6 @@ server <- function(input, output) {
                         
                         
                         DF <- read.csv(input$the.site)
-                        print(DF)
                         #### score listi over time
                         DF.scores.hist <- data.frame(names(DF[,5:length(DF)]))
                         
@@ -99,9 +103,10 @@ server <- function(input, output) {
                         the.game <- input$the.game
                         
                         score.results <- data.frame()
-                        
+                        the.text <- "Changes in score over all time."
                         if(the.year != 0){
                                 DF <- (DF[year(DF$Dagsetning) == the.year,])
+                                the.text <- paste0("changes in score in the year ", the.year)
                         }
                         
                         elo <- function(winner.score, loser.score, k = input$k) {
@@ -191,8 +196,11 @@ server <- function(input, output) {
                         #sorterað eftir W/L ratio
                         samset <- samset[order(-samset$ratio),]
                         
-                        
+                        output$score.changing <- renderTable(score.results)
+                        output$descript <- renderPrint(the.text)
+                        output$descript2 <- renderPrint("óháð ári. Heildar samantekt leikja")
                         output$final.score <- renderTable(samset)
+                        
                         print("Hér birtist breytingar á skorum yfir þann tíma sem var valinn:")
                         print(score.results)
                         print("")
