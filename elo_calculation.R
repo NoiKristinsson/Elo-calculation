@@ -22,7 +22,25 @@ elo.calc <- function(googlesheet = NA, the.year = 0, k = 16, default.score = 200
 
 
 
-DF <- read.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vTRlgvBwmSBPtL_WSGW4TN8qLe1dYpySU2i8h4R08PPjm7UygsNEdD3L1cqksA0ISF23mI_NgEK_SGQ/pub?gid=0&single=true&output=csv")
+DF <- read.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vTRlgvBwmSBPtL_WSGW4TN8qLe1dYpySU2i8h4R08PPjm7UygsNEdD3L1cqksA0ISF23mI_NgEK_SGQ/pub?gid=0&single=true&output=csv", na.strings=c("","NA"))
+
+
+DF$Dagsetning <- as.Date(DF$Dagsetning, "%m/%d/%Y")
+
+
+#subsetting the database if year is not set to default
+the.year <- input$the.year
+####TEST the.year <- 0
+the.text <- "Changes in score over all time."
+
+if(the.year != 0){
+        DF <- (DF[year(DF$Dagsetning) == the.year,])
+        the.text <- paste0("changes in score in the year ", the.year)
+}
+
+##Clean up all NA players and remove from
+DF <- Filter(function(x)!all(is.na(x)), DF)
+
 
 #### score listi over time
 DF.scores.hist <- data.frame(names(DF[,5:length(DF)]))
@@ -54,24 +72,10 @@ samset$ratio <- round(samset$wins/samset$losses, 2)
 samset$percentage.won <- round(samset$wins/(samset$wins+samset$losses)*100) 
 
 
-DF$Dagsetning <- as.Date(DF$Dagsetning, "%m/%d/%Y")
-
-
-#DF <- DF[DF$Spilið != "Lose",]
-#rownames(DF) <- seq(length=nrow(DF))
-
-
-
-
-
-#subsetting the database if year is not set to default
-the.year <- 0
 
 score.results <- data.frame()
 
-if(the.year != 0){
-        DF <- (DF[year(DF$Dagsetning) == the.year,])
-}
+
 
 elo <- function(winner.score, loser.score, k = 16) {
         ## Transform rating
@@ -154,11 +158,17 @@ colnames(score.results) <- (c("names", "score.change"))
 # Sorter eftir stigum
 score.results <- score.results[order(-score.results$score.change),]
 
-# breyta INF í 0
-samset[!is.finite(samset$ratio),]$ratio <- 0
+# breyta INF í 0 ef INF er til staðar í ratio
+if(any(is.infinite(samset$ratio)) == TRUE){
+        print("TRUE")
+        samset[!is.finite(samset$ratio),]$ratio <- 0
+}
+
 
 #sorterað eftir W/L ratio
 samset <- samset[order(-samset$ratio),]
+
+final.print <- ifelse(the.year == 0, "fyrir öll árin. Heildar samantekt leikja. Sorterað eftir W/L ratio", paste0("fyrir árið ", the.year, ". Samantekt leikja. Sorterað eftir W/L ratio"))
 
 
 print("Hér birtist breytingar á skorum yfir þann tíma sem var valinn:")
@@ -166,7 +176,7 @@ print(score.results)
 print("")
 #print(DF.scores.hist)
 
-print("hér er samantekt á skorinu hjá öllum. óháð ári, W/L ratio:")
+print(final.print)
 print(samset)
 
 }

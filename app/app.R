@@ -56,12 +56,32 @@ server <- function(input, output) {
                         
                         
                         ## Main function
-                        ### inniheldur the.year = 0, k = 16, default.score = 2000, the.game = 2000, min.game = 3
+                        ### inniheldur the.year = 0, k = 16, default.score = 2000, the.game = 2000
                         
+                        ###TEST ### k <- 16
                         
+                        DF <- read.csv(input$the.site, na.strings=c("","NA"))
+                        ####TEST#### DF <- read.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vTRlgvBwmSBPtL_WSGW4TN8qLe1dYpySU2i8h4R08PPjm7UygsNEdD3L1cqksA0ISF23mI_NgEK_SGQ/pub?output=csv", na.strings=c("","NA"))
                         
-                        DF <- read.csv(input$the.site)
                         #### score listi over time
+                        
+                        ### fix the date
+                        DF$Dagsetning <- as.Date(DF$Dagsetning, "%m/%d/%Y")
+                        
+                        
+                        #subsetting the database if year is not set to default
+                        the.year <- input$the.year
+                        ####TEST the.year <- 0
+                        the.text <- "Changes in score over all time."
+                        
+                        if(the.year != 0){
+                                DF <- (DF[year(DF$Dagsetning) == the.year,])
+                                the.text <- paste0("changes in score in the year ", the.year)
+                        }
+                        
+                        ##Clean up all NA players and remove from
+                        DF <- Filter(function(x)!all(is.na(x)), DF)
+                        
                         DF.scores.hist <- data.frame(names(DF[,5:length(DF)]))
                         
                         ### Búa til grunn scorelista með NA sem stig
@@ -75,6 +95,7 @@ server <- function(input, output) {
                         
                         # Set the default beginning score
                         default.score <- input$default.score
+                        ###TEST### default.score <- 2000
                         
                 
                         ###  wins / loses / number of games / win percentages
@@ -88,26 +109,20 @@ server <- function(input, output) {
                         samset$percentage.won <- round(samset$wins/(samset$wins+samset$losses)*100) 
                         
                         
-                        DF$Dagsetning <- as.Date(DF$Dagsetning, "%m/%d/%Y")
+                       
                         
                         
                         #DF <- DF[DF$Spilið != "Lose",]
                         #rownames(DF) <- seq(length=nrow(DF))
                         
                         
-                        
-                        
-                        
-                        #subsetting the database if year is not set to default
-                        the.year <- input$the.year
                         the.game <- input$the.game
+                        ###TEST the.game <- 2000
                         
                         score.results <- data.frame()
-                        the.text <- "Changes in score over all time."
-                        if(the.year != 0){
-                                DF <- (DF[year(DF$Dagsetning) == the.year,])
-                                the.text <- paste0("changes in score in the year ", the.year)
-                        }
+                        
+                        
+                        
                         
                         elo <- function(winner.score, loser.score, k = input$k) {
                                 ## Transform rating
@@ -190,23 +205,25 @@ server <- function(input, output) {
                         # Sorter eftir stigum
                         score.results <- score.results[order(-score.results$score.change),]
                         
-                        # breyta INF í 0
-                        samset[!is.finite(samset$ratio),]$ratio <- 0
+                        # breyta INF í 0 ef INF er til staðar í ratio
+                        if(any(is.infinite(samset$ratio)) == TRUE){
+                                print("TRUE")
+                                samset[!is.finite(samset$ratio),]$ratio <- 0
+                        }
+                        
                         
                         #sorterað eftir W/L ratio
                         samset <- samset[order(-samset$ratio),]
                         
+                        final.print <- ifelse(the.year == 0, "fyrir öll árin. Heildar samantekt leikja. Sorterað eftir W/L ratio", paste0("fyrir árið ", the.year, ". Samantekt leikja. Sorterað eftir W/L ratio"))
+                        
+                        
                         output$score.changing <- renderTable(score.results)
                         output$descript <- renderPrint(the.text)
-                        output$descript2 <- renderPrint("óháð ári. Heildar samantekt leikja")
+                        output$descript2 <- renderPrint(final.print)
                         output$final.score <- renderTable(samset)
                         
-                        print("Hér birtist breytingar á skorum yfir þann tíma sem var valinn:")
-                        print(score.results)
-                        print("")
-                        #print(DF.scores.hist)
-                        print("hér er samantekt á skorinu hjá öllum. óháð ári:")
-                        print(samset)
+                      
                 
                 })
                 
