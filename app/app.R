@@ -30,12 +30,39 @@ ui <- fluidPage(
                         ), 
                               
 
-                tabPanel("Help", "contents"),
-                tabPanel("Google sheet setup", "contents") 
+                tabPanel("Help", 
+                         verticalLayout(
+                                 tags$h1("Elo explained"),
+                                 "This shiny app uses Elo to calculate score for each player. The first players will start with the _default.score_, every player joining after that will start with the average score of current players.",
+                                 tags$h2("the inputs"),
+                                 
+                                 tags$h3("The google sheet"),
+                                 "Here one must input the direction to the google sheet after it has been published to the web as csv and set up correctly. The way it should be set up can be found in the next tab.",
+                                 "when publishing google sheets one must go to file and from there publish to the web as csv. This is not the same as sharing a google sheet.",
+                                 
+                                 tags$h3("The year"),
+                                 "Which year to filter out. it is only possible to filter one year. If this is left as 0, the whole sheet (all years) will be used for calculations",
+                                 
+                                 tags$h3("k value"),
+                                 "K value decides the increments on who much players increase in score when winning or losing. most common numbers are 16 and 32.",
+                                 
+                                 tags$h3("Default value"),
+                                 "the default value determines what score the first players will start with. Most common is 2000",
+                                 
+                                 tags$h3("Basic score for the game"),
+                                 "This determines what the score is for the game when it goes up against players. It defaults on 2000 but perhaps I will make it adaptive in the future or offer different varieties.",
+                                 tags$br(),
+                                 "If you want to see something specific email me at -- noi at logn dot is"
+                                
+                         )
+                )
+                # object 3
+                         
+                         ),
+                tabPanel("Google sheet setup") 
                               
                )
         
-        )
 
 
         
