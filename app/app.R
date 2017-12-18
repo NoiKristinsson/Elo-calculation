@@ -99,11 +99,11 @@ server <- function(input, output) {
                         #subsetting the database if year is not set to default
                         the.year <- input$the.year
                         ####TEST the.year <- 0
-                        the.text <- "Changes in score over all time."
+                        the.text <- "Score and changes in score over all time (sorted by score)"
                         
                         if(the.year != 0){
                                 DF <- (DF[year(DF$Dagsetning) == the.year,])
-                                the.text <- paste0("changes in score in the year ", the.year)
+                                the.text <- paste0("Score and changes in score in the year ", the.year, "sorted by score")
                         }
                         
                         ##Clean up all NA players and remove from
@@ -147,7 +147,7 @@ server <- function(input, output) {
                         ###TEST the.game <- 2000
                         
                         score.results <- data.frame()
-                        
+                        score.diff <- data.frame()
                         
                         
                         
@@ -221,16 +221,20 @@ server <- function(input, output) {
                         for (i in 2:nrow(DF.scores.hist)-1){
                                 
                                 all.list <- which(!is.na(DF.scores.hist[i,]))
-                                fsl <- DF.scores.hist[i,all.list[2]]  
-                                scl <- DF.scores.hist[i,length(DF.scores.hist)]
-                                score.results <- rbind(score.results,(fsl-scl))
+                                fsl <- as.integer(DF.scores.hist[i,all.list[2]])  
+                                scl <- as.integer(DF.scores.hist[i,length(DF.scores.hist)])
+                                #score.results <- rbind(score.results, scl)
+                                score.diff <- rbind(score.diff, (fsl-scl))
+                                score.results <- rbind(score.results, scl)
+                                
                         }
                         
+                        score.results <- cbind(score.results, score.diff)
                         score.results <- cbind(DF.scores[1:nrow(DF.scores.hist)-1,1], score.results)
-                        colnames(score.results) <- (c("names", "score.change"))
+                        colnames(score.results) <- (c("names", "score", "score.change"))
                         
                         # Sorter eftir stigum
-                        score.results <- score.results[order(-score.results$score.change),]
+                        score.results <- score.results[order(-score.results$score),]
                         
                         # breyta INF í 0 ef INF er til staðar í ratio
                         if(any(is.infinite(samset$ratio)) == TRUE){

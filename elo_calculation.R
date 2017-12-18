@@ -74,7 +74,7 @@ samset$percentage.won <- round(samset$wins/(samset$wins+samset$losses)*100)
 
 
 score.results <- data.frame()
-
+score.diff <- data.frame()
 
 
 elo <- function(winner.score, loser.score, k = 16) {
@@ -145,18 +145,22 @@ lost.list <- names(DF)[which(DF[i,] == "Lose", arr.ind = T)[, "col"]]
 
 # Hér er reiknað hve mikið fólk hefur hækkað yfir tímabilið
 for (i in 2:nrow(DF.scores.hist)-1){
-
+        
         all.list <- which(!is.na(DF.scores.hist[i,]))
-        fsl <- DF.scores.hist[i,all.list[2]]  
-        scl <- DF.scores.hist[i,length(DF.scores.hist)]
-        score.results <- rbind(score.results,(fsl-scl))
+        fsl <- as.integer(DF.scores.hist[i,all.list[2]])  
+        scl <- as.integer(DF.scores.hist[i,length(DF.scores.hist)])
+        #score.results <- rbind(score.results, scl)
+        score.diff <- rbind(score.diff, (fsl-scl))
+        score.results <- rbind(score.results, scl)
+        
 }
 
+score.results <- cbind(score.results, score.diff)
 score.results <- cbind(DF.scores[1:nrow(DF.scores.hist)-1,1], score.results)
-colnames(score.results) <- (c("names", "score.change"))
+colnames(score.results) <- (c("names", "score", "score.change"))
 
 # Sorter eftir stigum
-score.results <- score.results[order(-score.results$score.change),]
+score.results <- score.results[order(-score.results$score),]
 
 # breyta INF í 0 ef INF er til staðar í ratio
 if(any(is.infinite(samset$ratio)) == TRUE){
