@@ -88,7 +88,7 @@ server <- function(input, output) {
                         ###TEST ### k <- 16
                         
                         DF <- read.csv(input$the.site, na.strings=c("","NA"))
-                        ####TEST#### DF <- read.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vTRlgvBwmSBPtL_WSGW4TN8qLe1dYpySU2i8h4R08PPjm7UygsNEdD3L1cqksA0ISF23mI_NgEK_SGQ/pub?output=csv", na.strings=c("","NA"))
+####TEST#### DF <- read.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vTRlgvBwmSBPtL_WSGW4TN8qLe1dYpySU2i8h4R08PPjm7UygsNEdD3L1cqksA0ISF23mI_NgEK_SGQ/pub?output=csv", na.strings=c("","NA"))
                         
                         #### score listi over time
                         
@@ -98,7 +98,7 @@ server <- function(input, output) {
                         
                         #subsetting the database if year is not set to default
                         the.year <- input$the.year
-                        ####TEST the.year <- 0
+####TEST the.year <- 0
                         the.text <- "Score and changes in score over all time (sorted by score)"
                         
                         if(the.year != 0){
@@ -122,7 +122,7 @@ server <- function(input, output) {
                         
                         # Set the default beginning score
                         default.score <- input$default.score
-                        ###TEST### default.score <- 2000
+###TEST### default.score <- 2000
                         
                 
                         ###  wins / loses / number of games / win percentages
@@ -144,14 +144,14 @@ server <- function(input, output) {
                         
                         
                         the.game <- input$the.game
-                        ###TEST the.game <- 2000
+###TEST the.game <- 2000
                         
                         score.results <- data.frame()
                         score.diff <- data.frame()
                         
                         
                         
-                        elo <- function(winner.score, loser.score, k = input$k) {
+                        elo <- function(winner.score, loser.score, k = 16) {
                                 ## Transform rating
                                 winner.score.simp <- 10^(winner.score/400) 
                                 loser.score.simp <- 10^(loser.score/400)
@@ -175,37 +175,57 @@ server <- function(input, output) {
                         DF$Dagsetning <- as.character(DF$Dagsetning)
                         
                         for (i in 1:nrow(DF)) {
+                                print(paste0("this is loop number: ", i))
                                 won.list  <- names(DF)[which(DF[i,] == "Win", arr.ind = T)[, "col"]]
                                 lost.list <- names(DF)[which(DF[i,] == "Lose", arr.ind = T)[, "col"]]
                                 
-                                all.players <- append(won.list, lost.list)
-                                ### gefa 2000 ef allir í hópnum ef first players s.s alfyrsta spilun
-                                if(all(is.na(DF.scores$score)))
-                                {
-                                        DF.scores$score <- with(DF.scores,ifelse(names %in% all.players & is.na(score),yes=default.score,no=score))
-                                }
-                                if(!all(is.na(DF.scores$score)))        
-                                {
-                                        # Hér er gert meðaltal af núverandi spilurum
-                                        DF.scores$score <- with(DF.scores,ifelse(names %in% all.players & is.na(score),yes=mean(na.omit(DF.scores$score)),no=score))
-                                }
+                                print(paste0("the won.list: ", won.list))
+                                print(paste0("The lost.list: ", lost.list))
                                 
+                                all.players <- append(won.list, lost.list)
+                                
+                                print(paste0("all.players: ", all.players))
+                                
+                                ### gefa 2000 ef allir í hópnum ef first players s.s alfyrsta spilun
+        
+        if(all(is.na(DF.scores$score))){
+                DF.scores$score <- with(DF.scores,ifelse(names %in% all.players & is.na(score),yes=default.score,no=score))
+        }
+        if(!all(is.na(DF.scores$score))){
+                # Hér er gert meðaltal af núverandi spilurum
+                #Sækja skor frá fyrri leikjum.
+
+                DF.scores$score <- with(DF.scores,ifelse(names %in% all.players & is.na(score),yes=mean(na.omit(DF.scores$score)),no=score))
+                                        }
+
+                print(paste0("current scores: ", DF.scores))
                                 # prepare comparing score
                                 # first get the average of the loser to pit against winner
                                 loser.mean <- mean(DF.scores$score[DF.scores$names %in% lost.list])
+                                
+                                print(paste0("the loser.mean: ", loser.mean))
                                 # than the average of the winners to pit against losers
                                 winner.mean <- mean(DF.scores$score[DF.scores$names %in% won.list])
+                                
+                                print(paste0("the winner.mean: ", winner.mean))
                                 # than each of the winners score is returned
                                 # Hér er allt reiknað og því skilað til baka í gagnagrunninn
                                 # Hér eru bara sigurvegarar
+                                temp <- DF.scores
+                                temp$score <- NA
+                                
                                 for (e in won.list){
-                                        new.score.win <- elo(DF.scores$score[DF.scores$names == e], loser.mean)[1]
-                                        DF.scores$score[DF.scores$names == e] <- new.score.win
+                                        temp$score[temp$names == e] <- elo(DF.scores$score[DF.scores$names == e], loser.mean)[1]  
+                                        #DF.scores$score[DF.scores$names == e] <- new.score.win
                                 }
-                                for (e in lost.list){
-                                        new.score.lose <- elo(DF.scores$score[DF.scores$names == e], winner.mean)[2]
-                                        DF.scores$score[DF.scores$names == e] <- new.score.lose      
+                                for (f in lost.list){
+                                        temp$score[temp$names == f] <- elo(DF.scores$score[DF.scores$names == f], winner.mean)[2]
+                                        #DF.scores$score[DF.scores$names == f] <- new.score.lose
+                                        #print(paste0("new score lose: ", new.score.lose))   
                                 }
+                                
+                                DF.scores$score <- ifelse(is.na(temp$score), DF.scores$score, DF.scores$score <- temp$score)
+                                
                                 # resetta spilið
                                 DF.scores$score[DF.scores$names == "Spilið"] <- the.game
                                 
@@ -213,7 +233,7 @@ server <- function(input, output) {
                                 DF.scores.hist <- cbind(DF.scores.hist, DF.scores$score)
                                 colnames(DF.scores.hist)[length(DF.scores.hist)] <- as.character(DF[i,2])
                                 
-                                
+                                #print(loser.mean, winner.mean)
                         }
                         
                         
@@ -221,10 +241,10 @@ server <- function(input, output) {
                         for (i in 2:nrow(DF.scores.hist)-1){
                                 
                                 all.list <- which(!is.na(DF.scores.hist[i,]))
-                                fsl <- as.integer(DF.scores.hist[i,all.list[2]])  
-                                scl <- as.integer(DF.scores.hist[i,length(DF.scores.hist)])
+                                fsl <- DF.scores.hist[i,all.list[2]]
+                                scl <- DF.scores.hist[i,length(DF.scores.hist)]
                                 #score.results <- rbind(score.results, scl)
-                                score.diff <- rbind(score.diff, (fsl-scl))
+                                score.diff <- rbind(score.diff, (scl-fsl))
                                 score.results <- rbind(score.results, scl)
                                 
                         }
