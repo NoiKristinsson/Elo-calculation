@@ -13,7 +13,7 @@ ui <- fluidPage(
                               numericInput(inputId = "the.year", "The Year, (0 = all years)", value = 0),
                               numericInput(inputId = "k", "k value", value = 16),
                               numericInput(inputId = "default.score", "Default score", value = 2000),
-                              numericInput(inputId = "the.game", "Basic score for the game", value = 2000),
+                              #numericInput(inputId = "the.game", "Basic score for the game", value = 2000),
                               actionButton("goButton", "Calculate Score")
                                       ),
                                         mainPanel(
@@ -34,6 +34,7 @@ ui <- fluidPage(
                          verticalLayout(
                                  tags$h1("Elo explained"),
                                  "This shiny app uses Elo to calculate score for each player. The first players will start with the _default.score_, every player joining after that will start with the average score of current players.",
+                                 tags$p("When players go up against the game (co-op) the score of the game is always the average of the current players score."),
                                  tags$h2("the inputs"),
                                  
                                  tags$h3("The google sheet"),
@@ -49,8 +50,8 @@ ui <- fluidPage(
                                  tags$h3("Default value"),
                                  "the default value determines what score the first players will start with. Most common is 2000",
                                  
-                                 tags$h3("Basic score for the game"),
-                                 "This determines what the score is for the game when it goes up against players. It defaults on 2000 but perhaps I will make it adaptive in the future or offer different varieties.",
+                                 #tags$h3("Basic score for the game"),
+                                 #"This determines what the score is for the game when it goes up against players. It defaults on 2000 but perhaps I will make it adaptive in the future or offer different varieties.",
                                  tags$br(),
                                  "If you want to see something specific email me at -- noi at logn dot is"
                                 
@@ -143,14 +144,14 @@ server <- function(input, output) {
                         #rownames(DF) <- seq(length=nrow(DF))
                         
                         
-                        the.game <- input$the.game
+                        the.game <- 2000
 ###TEST the.game <- 2000
                         
                         score.results <- data.frame()
                         score.diff <- data.frame()
                         
         #(print("5"))                   
-                        elo <- function(winner.score, loser.score, k = 16) {
+                        elo <- function(winner.score, loser.score, k = input$k) {
                                 ## Transform rating
                                 winner.score.simp <- 10^(winner.score/400) 
                                 loser.score.simp <- 10^(loser.score/400)
@@ -184,6 +185,8 @@ server <- function(input, output) {
                                 
                                 all.players <- append(won.list, lost.list)
                                 
+                                
+                                
                                 #print(paste0("all.players: ", all.players))
                                 
                                 ### gefa 2000 ef allir í hópnum ef first players s.s alfyrsta spilun
@@ -202,7 +205,10 @@ server <- function(input, output) {
                 print(DF.scores)
                 #DF.scores$score <- 2000
         }
-
+                #stig spilsins er alltaf gert að meðaltalinu.
+                                the.game <- round(mean(DF.scores[DF.scores$names %in% all.players,]$score))               
+                                
+                                
 
                 #print(paste0("current scores: ", DF.scores))
                                 # prepare comparing score
