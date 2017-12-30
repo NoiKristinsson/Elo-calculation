@@ -13,6 +13,7 @@ ui <- fluidPage(
                               numericInput(inputId = "the.year", "The Year, (0 = all years)", value = 0),
                               numericInput(inputId = "k", "k value", value = 16),
                               numericInput(inputId = "default.score", "Default score", value = 2000),
+                              checkboxInput(inputId = "include.game", "Include scores where players play against the game", value = TRUE),
                               #numericInput(inputId = "the.game", "Basic score for the game", value = 2000),
                               actionButton("goButton", "Calculate Score")
                                       ),
@@ -88,6 +89,7 @@ server <- function(input, output) {
                         
                         ###TEST ### k <- 16
         #(print("1"))
+                        
                         DF <- read.csv(input$the.site, na.strings=c("","NA"))
 ####TEST#### DF <- read.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vTRlgvBwmSBPtL_WSGW4TN8qLe1dYpySU2i8h4R08PPjm7UygsNEdD3L1cqksA0ISF23mI_NgEK_SGQ/pub?output=csv", na.strings=c("","NA"))
                         
@@ -96,7 +98,9 @@ server <- function(input, output) {
                         ### fix the date
                         DF$Dagsetning <- as.Date(DF$Dagsetning, format="%m/%d/%Y")
                         
-                        
+                        if(input$include.game == FALSE){
+                                DF <- DF %>% filter(is.na(Spilið))
+                        }
                         #subsetting the database if year is not set to default
                         the.year <- input$the.year
 ####TEST the.year <- 0
